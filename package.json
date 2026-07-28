@@ -1,0 +1,54 @@
+{
+    "name":  "fuse",
+    "version":  "1.0.0",
+    "description":  "FUSE - ADHD Task Initiation App",
+    "main":  "main.js",
+    "author":  "Rob Bulkley",
+    "scripts":  {
+                    "start":  "electron .",
+                    "build":  "electron-builder"
+                },
+    "devDependencies":  {
+                            "electron":  "^34.0.0",
+                            "electron-builder":  "^26.0.12"
+                        },
+    "build":  {
+                  "appId":  "com.fuse.app",
+                  "productName":  "FUSE",
+                  "copyright":  "Copyright (c) 2025 Rob Bulkley",
+                  "files":  [
+                                "main.js",
+                                "renderer.js",
+                                "index.html",
+                                "style.css",
+                                "audio.js",
+                                "sounds/**",
+                                "Icon.ico",
+                                "Icon.png"
+                            ],
+                  "win":  {
+                              "target":  [
+                                             {
+                                                 "target":  "nsis",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             }
+                                         ],
+                              "icon":  "Icon.ico"
+                          },
+                  "nsis":  {
+                               "oneClick":  false,
+                               "allowToChangeInstallationDirectory":  true,
+                               "installerIcon":  "Icon.ico",
+                               "uninstallerIcon":  "Icon.ico",
+                               "installerHeaderIcon":  "Icon.ico",
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true,
+                               "shortcutName":  "FUSE"
+                           },
+                  "directories":  {
+                                      "output":  "dist"
+                                  }
+              }
+}

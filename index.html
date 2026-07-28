@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FUSE</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-inferno">
+
+  <canvas id="particle-canvas"></canvas>
+  <!-- spark-canvas sits above all screens so sparks render over the countdown -->
+  <canvas id="spark-canvas"></canvas>
+
+  <!-- ══ ONBOARDING ══ -->
+  <div id="onboarding-screen" class="screen hidden">
+    <div class="onboarding-content">
+      <div class="onboard-step" id="onboard-0">
+        <div class="onboard-icon">🔥</div>
+        <h2>Welcome to FUSE</h2>
+        <p>Your brain needs a fuse to light it. This app manufactures the urgency your ADHD brain needs to actually start.</p>
+        <button class="btn-primary" onclick="nextOnboard(1)">LET'S GO</button>
+      </div>
+      <div class="onboard-step hidden" id="onboard-1">
+        <div class="onboard-icon">🎯</div>
+        <h2>Missions, Not Tasks</h2>
+        <p>Every task is a mission with a countdown timer. Complete it before the fuse runs out or it dies and haunts your graveyard.</p>
+        <button class="btn-primary" onclick="nextOnboard(2)">GOT IT</button>
+      </div>
+      <div class="onboard-step hidden" id="onboard-2">
+        <div class="onboard-icon">⚡</div>
+        <h2>Streaks &amp; XP</h2>
+        <p>Show up every day to protect your streak. Complete missions to earn XP and level up. Let the world know on X when you win.</p>
+        <button class="btn-primary" onclick="nextOnboard(3)">NICE</button>
+      </div>
+      <div class="onboard-step hidden" id="onboard-3">
+        <div class="onboard-icon">☠</div>
+        <h2>The Graveyard</h2>
+        <p>Expired missions don't disappear. They sit in the graveyard staring at you. Reclaim them for double XP — but the timer is shorter.</p>
+        <button class="btn-primary" onclick="finishOnboard()">I'M READY 🔥</button>
+      </div>
+      <div class="onboard-dots">
+        <span class="dot active" id="dot-0"></span>
+        <span class="dot" id="dot-1"></span>
+        <span class="dot" id="dot-2"></span>
+        <span class="dot" id="dot-3"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LOGIN SCREEN ══ -->
+  <div id="login-screen" class="screen hidden">
+    <div id="fireworks"></div>
+    <div class="login-content">
+      <h1 class="logo">🔥 FUSE</h1>
+      <div class="streak-display">
+        <span class="streak-number" id="login-streak">0</span>
+        <span class="streak-label">DAY STREAK</span>
+        <div class="chain" id="login-chain"></div>
+      </div>
+      <p class="login-message" id="login-message">Welcome back. Let's get it.</p>
+      <div class="xp-display"><span id="login-xp">0</span> XP &nbsp;|&nbsp; Level <span id="login-level">1</span></div>
+      <button class="btn-primary" id="enter-btn">IGNITE 🔥</button>
+    </div>
+  </div>
+
+  <!-- ══ IGNITION RITUAL ══ -->
+  <div id="ignition-screen" class="screen hidden">
+    <div class="ignition-content">
+      <div class="ignition-timer" id="ignition-timer">8</div>
+      <p class="ignition-question">What is the ONE thing<br>you will crush today?</p>
+      <input type="text" id="ignition-input" placeholder="Type it. Own it." maxlength="80" />
+      <button class="btn-primary" id="ignition-btn">LOCK IT IN 🔥</button>
+      <button class="btn-cancel" id="ignition-skip">skip for now</button>
+    </div>
+  </div>
+
+  <!-- ══ MAIN SCREEN ══ -->
+  <div id="main-screen" class="screen hidden">
+    <div class="titlebar">
+      <span class="app-title">🔥 FUSE</span>
+      <div class="titlebar-right">
+        <span class="wins-badge" title="Today's wins">⚡ <span id="wins-count">0</span></span>
+        <span class="streak-badge">🔥 <span id="streak-count">0</span></span>
+        <span class="level-badge" id="level-badge">LVL <span id="level-count">1</span></span>
+        <button class="icon-btn" id="settings-btn" title="Settings">⚙</button>
+        <button class="close-btn" id="close-btn">✕</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="xp-bar-container">
+        <div class="xp-bar-fill" id="xp-bar"></div>
+        <span class="xp-text" id="xp-text">0 XP</span>
+      </div>
+
+      <!-- Daily Focus Banner -->
+      <div id="focus-banner" class="focus-banner hidden">
+        <div class="focus-banner-label">TODAY'S MISSION</div>
+        <div class="focus-banner-text" id="focus-banner-text"></div>
+        <button class="focus-launch-btn" id="focus-launch-btn">LAUNCH AS MISSION</button>
+      </div>
+
+      <!-- Active Mission -->
+      <div class="section-label">ACTIVE MISSION</div>
+      <div class="mission-card" id="mission-card">
+        <canvas class="ember-canvas" id="ember-canvas"></canvas>
+        <div class="mission-empty" id="mission-empty">
+          <p>No active mission.</p>
+          <button class="btn-small" id="add-mission-btn">+ NEW MISSION</button>
+        </div>
+        <div class="mission-active hidden" id="mission-active">
+          <div class="mission-name" id="mission-name"></div>
+          <div class="countdown" id="countdown">00:00:00</div>
+          <div class="mission-actions">
+            <button class="btn-complete" id="complete-btn">✓ COMPLETE</button>
+            <button class="btn-fuse" id="fuse-btn" title="Emergency Fuse: spend 10 XP to extend by 2 hours">⚡ FUSE</button>
+            <button class="btn-abandon" id="abandon-btn">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Mission Form -->
+      <div class="add-mission-form hidden" id="add-mission-form">
+        <!-- Templates -->
+        <div class="template-label">QUICK MISSIONS</div>
+        <div class="templates" id="templates"></div>
+        <div class="form-divider">— or create your own —</div>
+        <input type="text" id="mission-input" placeholder="Name your mission..." maxlength="80" />
+        <div class="duration-picker">
+          <label>Fuse length:</label>
+          <select id="duration-select">
+            <option value="300">5 min 💀</option>
+            <option value="900">15 min</option>
+            <option value="1800">30 min</option>
+            <option value="3600" selected>1 hour</option>
+            <option value="7200">2 hours</option>
+            <option value="14400">4 hours</option>
+            <option value="86400">24 hours</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="launch-btn">LIGHT THE FUSE 🔥</button>
+          <button class="btn-cancel" id="cancel-btn">cancel</button>
+        </div>
+      </div>
+
+      <!-- Graveyard -->
+      <div class="section-label graveyard-label">☠ GRAVEYARD <span id="graveyard-count"></span></div>
+      <div class="graveyard" id="graveyard">
+        <p class="graveyard-empty" id="graveyard-empty">No failed missions. Keep it that way.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS SCREEN ══ -->
+  <div id="settings-screen" class="screen hidden">
+    <div class="settings-header">
+      <button class="back-btn" id="settings-back">← BACK</button>
+      <span class="settings-title">SETTINGS</span>
+    </div>
+    <div class="settings-content">
+
+      <div class="settings-section">THEME</div>
+      <div class="theme-toggle">
+        <button class="theme-btn active" id="theme-inferno" onclick="setTheme('inferno')">
+          <span class="theme-icon">🔥</span>
+          <span class="theme-name">INFERNO</span>
+          <span class="theme-desc">Hot. Intense.</span>
+        </button>
+        <button class="theme-btn" id="theme-campfire" onclick="setTheme('campfire')">
+          <span class="theme-icon">🪵</span>
+          <span class="theme-name">CAMPFIRE</span>
+          <span class="theme-desc">Warm. Steady.</span>
+        </button>
+        <button class="theme-btn" id="theme-cyber" onclick="setTheme('cyber')">
+          <span class="theme-icon">⚡</span>
+          <span class="theme-name">CYBER</span>
+          <span class="theme-desc">Blue. Electric.</span>
+        </button>
+        <button class="theme-btn" id="theme-void" onclick="setTheme('void')">
+          <span class="theme-icon">🌌</span>
+          <span class="theme-name">VOID</span>
+          <span class="theme-desc">Purple. Cosmic.</span>
+        </button>
+        <button class="theme-btn" id="theme-toxic" onclick="setTheme('toxic')">
+          <span class="theme-icon">☢️</span>
+          <span class="theme-name">TOXIC</span>
+          <span class="theme-desc">Neon. Ruthless.</span>
+        </button>
+        <button class="theme-btn" id="theme-arctic" onclick="setTheme('arctic')">
+          <span class="theme-icon">❄️</span>
+          <span class="theme-name">ARCTIC</span>
+          <span class="theme-desc">Ice cold. Crisp.</span>
+        </button>
+      </div>
+
+      <div class="settings-section">AUTO-POST TO X</div>
+      <div class="setting-row">
+        <span class="setting-label">Post level ups</span>
+        <label class="toggle"><input type="checkbox" id="setting-post-levelup"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Post mission wins</span>
+        <label class="toggle"><input type="checkbox" id="setting-post-complete"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Post shame (expired missions)</span>
+        <label class="toggle"><input type="checkbox" id="setting-post-shame"><span class="slider"></span></label>
+      </div>
+
+      <div class="settings-section">DATA</div>
+      <div class="setting-row">
+        <span class="setting-label">Your streak: <strong id="stats-streak">0</strong> days</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Total XP earned: <strong id="stats-xp">0</strong></span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Missions completed: <strong id="stats-completed">0</strong></span>
+      </div>
+      <div class="setting-row">
+        <button class="btn-danger" id="reset-btn">RESET ALL DATA</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ OVERLAYS ══ -->
+  <div id="levelup-overlay" class="overlay hidden">
+    <canvas class="overlay-canvas" id="levelup-canvas"></canvas>
+    <div class="overlay-content">
+      <div class="overlay-label">LEVEL UP</div>
+      <div class="new-level" id="new-level">2</div>
+      <p class="overlay-sub">Your brain is on fire.</p>
+      <button class="btn-primary" id="post-levelup-btn">POST TO X 🔥</button>
+      <button class="btn-cancel" id="skip-levelup-btn">keep it private</button>
+    </div>
+  </div>
+
+  <div id="complete-overlay" class="overlay hidden">
+    <canvas class="overlay-canvas" id="complete-canvas"></canvas>
+    <div class="overlay-content">
+      <div class="overlay-label">MISSION COMPLETE</div>
+      <div class="xp-earned" id="xp-earned">+150 XP</div>
+      <p class="overlay-sub" id="complete-mission-name"></p>
+      <button class="btn-primary" id="post-complete-btn">POST THE WIN 🔥</button>
+      <button class="btn-cancel" id="skip-complete-btn">keep it private</button>
+    </div>
+  </div>
+
+  <div id="graveyard-overlay" class="overlay hidden">
+    <div class="overlay-content grave-content">
+      <div class="tombstone">🪦</div>
+      <div class="overlay-label" style="color:#555">MISSION FAILED</div>
+      <p class="grave-mission-name" id="grave-mission-name"></p>
+      <p class="penalty-text">-75 XP — it haunts the graveyard now.</p>
+      <button class="btn-primary" id="post-shame-btn">POST THE L 💀</button>
+      <button class="btn-cancel" id="skip-shame-btn">suffer in silence</button>
+    </div>
+  </div>
+
+  <div id="confirm-overlay" class="overlay hidden">
+    <div class="overlay-content">
+      <div class="overlay-label">CONFIRM</div>
+      <p class="overlay-sub" id="confirm-message">Are you sure?</p>
+      <div style="display:flex;gap:12px;margin-top:8px">
+        <button class="btn-primary" id="confirm-yes">YES</button>
+        <button class="btn-cancel" id="confirm-no">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

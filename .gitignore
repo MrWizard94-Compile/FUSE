@@ -1,0 +1,16 @@
+# Generated Node/Electron output and local runtime data.
+node_modules/
+dist/
+build/
+coverage/
+npm-log.txt
+*.log
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
